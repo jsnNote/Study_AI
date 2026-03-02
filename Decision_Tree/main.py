@@ -76,7 +76,9 @@ def find_best_split(data, features, category_feature_map:dict=None):
         # 범주형 - 우선순위 o
         elif feature in category_feature_map:
             category = np.unique(data[:, i])
+            category_
         else:
+            
         # 데이터에 따른 처리
             # split_gini 계산
             # 최댓값인지 판단해서 best_feature_idx 업데이트
