@@ -118,29 +118,14 @@ class KNN:
 
 # 3. 학습
 
-# k 하이퍼 파라미터 선택
+# k 하이퍼 파라미터 선택(튜닝)
 max_score = 0
 best_k = 0
 for i in range(1, 31):
     model = KNN(k=i, metric=euclidean)
     model.fit(x_train, y_train)
 
-    # test = pd.read_csv(src + "test.csv")
-    # X_test = train.transform(DataPreprocessing)
-    # if used_SelectKBest:
-    #     #   - SelectKBest ✅
-    #     X_test_selected = feat_sel.fit_transform(X_test)
-    # else:
-    #     #   - SelectKBest ❌
-    #     X_test_selected = X_test[feat_sel]
-
-    # minmax_sclaer = MinMaxScaler()  # 특성의 범위가 불균형해서 0~1 범위로 스케일링
-    # minmax_sclaer.fit(X_test_selected)
-    # X_test_scaled = minmax_sclaer.transform(X_test_selected)
-
-    # 4. 검증
     score = np.mean(y_valid == model.predict(x_valid))
-    # print(score)
 
     if max_score < score:
         max_score = score
