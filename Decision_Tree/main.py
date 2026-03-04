@@ -293,7 +293,7 @@ class Decsion_Tree:
     def predict(self, X):
         return X.apply(lambda row: self._traverse_tree(row, self.root), axis=1).values
 
-enable_tuning = False
+enable_tuning = True
 model = None
 best_depth = 0
 best_sample_leaf = 0
@@ -305,23 +305,32 @@ if enable_tuning:
             model = Decsion_Tree(max_depth=depth , min_samples_leaf=samples_leaf)
             features = list(x_train.columns.values)
             model.fit(x_train, y_train, features)
+            train_score = np.mean(model.predict(x_train) == y_train)
             score = np.mean(model.predict(x_valdation) == y_valdation)
             if best_score < score:
                 best_depth, best_score = depth, score
                 best_sample_leaf = samples_leaf
+        print(f"max_depth: {depth} \n \t - train score: {train_score} \n \t - validation score: {score}")
 
     print(f"best depth: {best_depth}, best minimun leafs: {best_sample_leaf}")
 
     model = Decsion_Tree(max_depth=best_depth, min_samples_leaf=best_sample_leaf)
     features = list(x_train.columns.values)
     model.fit(x_train, y_train, features)
+
     print(np.mean(model.predict(x_valdation) == y_valdation))
 
 else:
-    model = Decsion_Tree(max_depth=30)
+    model = Decsion_Tree(max_depth=None)
     features = list(x_train.columns.values)
     model.fit(x_train, y_train, features)
-    print(np.mean(model.predict(x_valdation) == y_valdation))
+
+    train_score = np.mean(model.predict(x_train) == y_train)
+    score = np.mean(model.predict(x_valdation) == y_valdation)
+    print(f"score - train score: {train_score} \n \t - validation score: {score}")
+    model.visualize_tree(model.root)
+
+    # print(np.mean(model.predict(x_valdation) == y_valdation))
 
 # model.visualize_tree(model.root)
 
