@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 import json
+from matplotlib import pyplot as plt
+import seaborn as sns
+
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 src = "../datasets/titanic/"
 # 1. 데이터 전처리
@@ -259,12 +263,13 @@ class Decsion_Tree:
             return None
 
         if node.is_leaf:
-            return f"Predict({node.depth}): {int(node.value)}"
+            return f"Predict: {int(node.value)}, Depth: {node.depth}"
         
         return {
-        f"{node.feature} <= {float(node.threshold):.2f} ({node.depth})": {
+        f"{node.feature} <= {float(node.threshold):.2f}": {
             "left": self.structed_tree(node.left),
-            "right": self.structed_tree(node.right)
+            "right": self.structed_tree(node.right),
+            "depth": node.depth
         }
     }
     
@@ -290,13 +295,14 @@ class Decsion_Tree:
 
 enable_tuning = False
 model = None
+best_depth = 0
+best_sample_leaf = 0
+best_score = 0
+
 if enable_tuning:
-    best_depth = 0
-    best_sample_leaf = 0
-    best_score = 0
     for depth in range(1, 10):
         for samples_leaf in range(1, 10):
-            model = Decsion_Tree(max_depth=depth)
+            model = Decsion_Tree(max_depth=depth , min_samples_leaf=samples_leaf)
             features = list(x_train.columns.values)
             model.fit(x_train, y_train, features)
             score = np.mean(model.predict(x_valdation) == y_valdation)
@@ -304,13 +310,35 @@ if enable_tuning:
                 best_depth, best_score = depth, score
                 best_sample_leaf = samples_leaf
 
-    print(f"best depth: {best_depth}, best # minimun leafs: {best_sample_leaf}")
+    print(f"best depth: {best_depth}, best minimun leafs: {best_sample_leaf}")
 
     model = Decsion_Tree(max_depth=best_depth, min_samples_leaf=best_sample_leaf)
+    features = list(x_train.columns.values)
+    model.fit(x_train, y_train, features)
+    print(np.mean(model.predict(x_valdation) == y_valdation))
 
-model = Decsion_Tree()
-features = list(x_train.columns.values)
-model.fit(x_train, y_train, features)
-print(np.mean(model.predict(x_valdation) == y_valdation))
+else:
+    model = Decsion_Tree(max_depth=30)
+    features = list(x_train.columns.values)
+    model.fit(x_train, y_train, features)
+    print(np.mean(model.predict(x_valdation) == y_valdation))
 
-model.visualize_tree(model.root)
+# model.visualize_tree(model.root)
+
+# clf = DecisionTreeClassifier(
+#     criterion="gini",
+#     splitter="best",
+#     max_depth=best_depth,
+#     min_samples_leaf=best_sample_leaf, 
+#     random_state=42
+# ).fit(x_train, y_train)
+
+# print(np.mean(clf.predict(x_valdation) == y_valdation))
+
+# print(clf.feature_importances_)
+
+# for name, value in zip(features, clf.feature_importances_):
+#     print(name, value)
+
+# sns.barplot(x=clf.feature_importances_, y=features)
+# plt.show()
