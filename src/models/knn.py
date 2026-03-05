@@ -1,0 +1,50 @@
+import numpy as np
+import pandas as pd
+from pandas import DataFrame
+from ..core.distance import minkowski, manhattan, euclidean
+
+class KNN:
+    def __init__(self, k: int = 3, metric=minkowski, p: int = 2):
+        self.k = k
+        self.metric = None
+        self.p = p
+        self.X = None
+        allowed_metrics = [manhattan, minkowski, euclidean]
+        if metric in allowed_metrics:
+            self.metric = metric
+        else:
+            raise ValueError(
+                "metric은 manhattan, minkowski, euclidean 중 하나여야 합니다."
+            )
+
+    def _get_distance(self, x1, x2):
+        if self.metric == minkowski:
+            return self.metric(x1, x2, self.p)
+        return self.metric(x1, x2)
+
+    def fit(self, X, Y):
+        self.X_train = X
+        self.Y_train = Y
+
+    def predict(self, data: np.ndarray):
+        if data.ndim == 1:
+            data = data.reshape((1, -1))
+
+        size = data.shape[0]
+        predict_value = np.empty(size, dtype=int)
+
+        for item, idx in zip(data, range(size)):
+            distance = self._get_distance(self.X_train, item)
+            distance_list = [(d, l) for d, l in zip(distance, self.Y_train)]
+            distance_list.sort(key=lambda x: x[0])
+            k_label_list = distance_list[: self.k]
+            label_cnt = dict.fromkeys(set([v[1] for v in k_label_list]), 0)
+
+            for value in k_label_list:
+                label_cnt[value[1]] += 1
+
+            for k, v in label_cnt.items():
+                if max(label_cnt.values()) == v:
+                    predict_value[idx] = k
+
+        return predict_value
