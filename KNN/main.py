@@ -22,10 +22,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from src import KNN, accuracy_score
 from src.core import minkowski, manhattan, euclidean
 
-src = "../datasets/titanic/"
+path = "../datasets/titanic/"
 
 # 1. 데이터 전처리
-train = pd.read_csv(src + "train.csv")
+train = pd.read_csv(path + "train.csv")
 
 
 def DataPreprocessing(data: DataFrame):

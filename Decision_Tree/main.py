@@ -20,8 +20,8 @@ from sklearn.tree import DecisionTreeClassifier
 from src import DecsionTree
 from src import categorical_data_preprocessing, one_hot_encoding, accuracy_score
 
-src = "../datasets/titanic/"
-train = pd.read_csv(src + "train.csv")
+path = "../datasets/titanic/"
+train = pd.read_csv(path + "train.csv")
 
 # 1. 데이터 전처리
 def data_preprocessing(df: DataFrame):

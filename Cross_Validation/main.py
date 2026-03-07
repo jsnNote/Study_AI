@@ -1,3 +1,13 @@
+import sys
+import os
+
+# 현재 파일(main.py)의 부모(A)의 부모(my_ml_project) 경로를 가져옴
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+
+# 파이썬 모듈 검색 경로 최상단에 추가
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
@@ -6,9 +16,9 @@ from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from src import one_hot_encoding, categorical_data_preprocessing
 
-src = "../datasets/titanic/"
+path = "../datasets/titanic/"
 
-train = pd.read_csv(src + "train.csv")
+train = pd.read_csv(path + "train.csv")
 
 # 데이터 전처리
 def data_preprocessing(df: DataFrame):
@@ -44,6 +54,8 @@ x_train, x_val, y_train, y_val = train_test_split(
 )
 
 for depth in range(1, 10):
+    print(f"[ Depth: {depth} ]".center(30, "="))
+
     dt_clf = DecisionTreeClassifier(
         criterion="gini",
         splitter="best",
@@ -52,7 +64,7 @@ for depth in range(1, 10):
     ).fit(x_train, y_train)
 
     score = np.round(np.mean(dt_clf.predict(x_val) == y_val), 4)
-    print(f"Default (depth:{depth})\n - scores: {score}")
+    print(f"Default     score: {score}")
 
 
     cross_dt_clf = DecisionTreeClassifier(
@@ -64,4 +76,4 @@ for depth in range(1, 10):
 
     scores = cross_val_score(cross_dt_clf, x_train, y_train, scoring="accuracy", cv=5)
     mean = np.round(np.mean(scores), 4)
-    print(f"Cross Validation (depth: {depth})\n - scores: {mean}")
+    print(f"Cross Validation score: {mean}")

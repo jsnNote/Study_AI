@@ -13,7 +13,6 @@ class Node:
         self.is_leaf = is_leaf
         self.value = value
         self.depth = depth
-
 class DecsionTree:
     def __init__(self, max_depth=4, min_samples_leaf=5):
         self.root = None
