@@ -22,7 +22,7 @@ def find_best_split(X, y, features=None):
     split_info = {"feature": [], "threshold": []}
     X_np = np.array(X)
     y_np = np.array(y)
-    X_columns = X.columns.values
+    
     for feature_idx in range(X.shape[1]):
         column_values = X_np[:, feature_idx]
         idx_sorted = np.argsort(column_values)  # x가 DataFrame이면 안됨
@@ -33,7 +33,7 @@ def find_best_split(X, y, features=None):
         # feature = (
         #     features[feature_idx] if features else X_columns[feature_idx]
         # )  # else DataFrame으로 들어올 때, if는 그 외의 경우
-        feature = features[feature_idx] if features else X_columns[feature_idx]
+        feature = features[feature_idx]
           # else DataFrame으로 들어올 때, if는 그 외의 경우
         for t in thresholds:
             left_data = y_sorted[np.where(x_sorted <= t)]
