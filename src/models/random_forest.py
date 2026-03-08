@@ -13,7 +13,6 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
-        self.roots = []
         self.trees = None
 
     def _build_tree(self, X, y, features=None):
@@ -29,15 +28,14 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
                 random_state=(self.random_state + i) 
                 ) for i in range(self.n_estimators)]  # 재현성을 위해서 random_state 추가
         
-        for tree in self.trees:
+        for i, tree in enumerate(self.trees):
             # bootstrap
-            subset_x, subset_y = self.__bootstrap_sample(X, y)
+            subset_x, subset_y = self.__bootstrap_sample(X, y, i)
             
             tree.fit(subset_x, subset_y)
-            self.roots.append(tree.root)
 
-    def __bootstrap_sample(self, X, y):
-        rng = np.random.default_rng(seed=self.random_state)
+    def __bootstrap_sample(self, X, y, i):
+        rng = np.random.default_rng(seed=self.random_state+i)
         idx = rng.choice(X.index, size=self.max_samples)
         bootstrap_x = X.loc[idx]
         bootstrap_y = y.loc[idx]
@@ -52,12 +50,9 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
         categories = []
         for tree in self.trees:
             categories.append(tree.predict(X))
-            
-        df_categories = DataFrame(categories)
-        result = np.empty(df_categories.shape[1], dtype=np.int64)
-        for i in range(df_categories.shape[1]):
-            result[i] = mode(df_categories.loc[:, i])
-            
+
+        categories = np.array(categories)
+        result = np.apply_along_axis(mode, axis=0, arr=categories)
         return result
 
 
