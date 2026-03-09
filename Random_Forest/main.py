@@ -1,5 +1,4 @@
-import sys
-import os
+import sys, os, time
 
 # 현재 파일(main.py)의 부모(A)의 부모(my_ml_project) 경로를 가져옴
 root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -11,11 +10,9 @@ if root_path not in sys.path:
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-from matplotlib import pyplot as plt
-import seaborn as sns
 
 from sklearn.model_selection import train_test_split
-from src import RandomForest
+from src import RandomForest, ParalleRandomForest
 from src import categorical_data_preprocessing, one_hot_encoding, accuracy_score
 
 path = "../datasets/titanic/"
@@ -67,9 +64,23 @@ x_train, x_valdation, y_train, y_valdation = train_test_split(X_final, Y, test_s
 
 
 
-# 모델 구성
-rf = RandomForest(100)
-# 모델 학습
-rf.fit(x_train, y_train, features=features)
-# 모델 정확도
-print(rf.score(x_valdation, y_valdation))
+
+
+
+# Process를 만드는 거는 무거운 작업이기 때문에 작업이 적은 경우에는 오히려 순차적인 처리가 빠르다. -> 작업이 많으면 오히려 빠름
+if __name__ == '__main__':
+    rf = RandomForest(100, max_depth=10, min_samples_leaf=4)
+    # 순차 처리 랜덤포레스트
+    start_time = time.time()
+    rf.fit(x_train, y_train, features)
+    end_time = time.time()
+    print(end_time - start_time)
+    print(rf.score(x_valdation, y_valdation))
+    
+    # 병렬 처리 랜덤포레스트
+    prf = ParalleRandomForest(100, max_depth=10, min_samples_leaf=4)
+    start_time = time.time()
+    prf.fit(x_train, y_train, features)
+    end_time = time.time()
+    print(end_time - start_time)
+    print(prf.score(x_valdation, y_valdation))

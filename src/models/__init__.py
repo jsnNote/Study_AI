@@ -1,7 +1,7 @@
 from .decision_tree import DecsionTree, RandomForestTree
 from .knn import KNN
 from .regression import *
-from .random_forest import RandomForest
+from .random_forest import RandomForest, ParalleRandomForest
 
 __all__ = [
     "DecsionTree",
@@ -11,5 +11,6 @@ __all__ = [
     "LogisticRegression", 
     "BatchLinearRegression", 
     "BatchLogisticRegression",
-    "RandomForest"
+    "RandomForest",
+    "ParalleRandomForest"
 ]
