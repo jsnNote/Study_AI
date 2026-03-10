@@ -12,7 +12,7 @@ import pandas as pd
 from pandas import DataFrame
 
 from sklearn.model_selection import train_test_split
-from src import RandomForest, ParalleRandomForest
+from src import RandomForest, ParallelRandomForest, DecsionTree
 from src import categorical_data_preprocessing, one_hot_encoding, accuracy_score
 
 path = "../datasets/titanic/"
@@ -72,13 +72,13 @@ def time_test(n_estimators):
     end_time = time.time()
     rf_time = end_time - start_time
     
-    prf = ParalleRandomForest(100, max_depth=4, min_samples_leaf=1)
+    prf = ParallelRandomForest(100, max_depth=4, min_samples_leaf=1)
     start_time = time.time()
     prf.fit(x_train, y_train, features)
     end_time = time.time()
     prf_time = end_time - start_time
-
-    return (rf_time, prf_time)
+    accuracy = rf.score(x_validation, y_validation)
+    return (rf_time, prf_time, accuracy)
 
 
 # Process를 만드는 거는 무거운 작업이기 때문에 작업이 적은 경우에는 오히려 순차적인 처리가 빠르다. -> 작업이 많으면 오히려 빠름
@@ -86,26 +86,51 @@ if __name__ == '__main__':
     # # 순차 처리 랜덤포레스트
     # rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
     # rf.fit(x_train, y_train, features)
-    # print(rf.score(x_valdation, y_valdation))
+    # print(rf.score(x_validation, y_validation))
     
     # # 병렬 처리 랜덤포레스트
-    # prf = ParalleRandomForest(100, max_depth=4, min_samples_leaf=1)
+    # prf = ParallelRandomForest(100, max_depth=4, min_samples_leaf=1)
     # prf.fit(x_train, y_train, features)
-    # print(prf.score(x_valdation, y_valdation))
+    # print(prf.score(x_validation, y_validation))
     
     # 순차 처리 vs 병렬 처리 시간 테스트 코드
     for n in range(100, 501, 100):
-        rf_t, prf_t = time_test(n)
+        rf_t, prf_t, accuracy = time_test(n)
         print(f"Number of trees [{n}] \n - Sequential Random Forest Traing Time: {rf_t:.4f} \n - Paralle Random Forest Traing Time: {prf_t:.4f}")
-
-
-    # # oob_err test code
+        print(accuracy)
+        
+    # # oob_accuracy test code
     # rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
     # rf.fit(x_train, y_train, features)
-    # print(rf.oob_err)
+    # print(rf.oob_accuracy)
     
-    # prf = ParalleRandomForest(100, max_depth=4, min_samples_leaf=1)
+    # prf = ParallelRandomForest(100, max_depth=4, min_samples_leaf=1)
     # prf.fit(x_train, y_train, features)
-    # print(prf.oob_err)
+    # print(prf.oob_accuracy)
     
-    
+    # overfitting 
+    # max_depth로 overfitting 확인
+    # table = DataFrame(columns=["depth", "DT Train Accuracy", "DT Val Accuracy", "DT Gap", "RF Train Accuracy", "RF Val Accuracy", "RF Gap"])
+    # for depth in range(1, 11):
+    #     dt = DecsionTree(depth, 1)
+    #     dt.fit(x_train, y_train, features)
+    #     dt_train_score = np.mean(dt.predict(x_train) == y_train)
+    #     dt_val_score = np.mean(dt.predict(x_validation) == y_validation)
+    #     dt_gap = np.abs(dt_train_score - dt_val_score)
+    #     print(f"train score: {dt_train_score:.4f}, val score: {dt_val_score:.4f}")
+    #     print(f"depth({depth}) traing-validation data gap: {dt_gap:.4f}")
+    #     print("-" * 30)
+
+    #     rf = RandomForest(100, max_depth=depth, min_samples_leaf=1)
+    #     rf.fit(x_train, y_train, features)
+    #     rf_train_score = np.mean(rf.predict(x_train) == y_train)
+    #     rf_val_score = np.mean(rf.predict(x_validation) == y_validation)
+    #     rf_gap = np.abs(rf_train_score - rf_val_score)
+    #     print(f"train score: {rf_train_score:.4f}, val score: {rf_val_score:.4f}")
+    #     print(f"depth({depth}) traing-validation data gap: {rf_gap:.4f}")
+    #     print("=" * 30)
+    #     series = pd.Series([depth, round(dt_train_score, 4), round(dt_val_score, 4), round(dt_gap, 4), round(rf_train_score, 4), round(rf_val_score, 4), round(rf_gap, 4)]).to_frame().T
+    #     series.columns = ["depth", "DT Train Accuracy", "DT Val Accuracy", "DT Gap", "RF Train Accuracy", "RF Val Accuracy", "RF Gap"]
+    #     table = pd.concat([table, series], axis=0, ignore_index=True)
+        
+    # table.to_csv('result.csv')

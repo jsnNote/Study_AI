@@ -30,11 +30,11 @@
 
 # 4. Methodology(방법론)
 
-## 4.1 Algorithm Design(알고리즘 디자인)
+## 4.1 Structure(구조)
 
-- 구성
-- 구성
-- 구성
+- RandomForestTree - 기존 DT에서 분할 샘플링을 추가한 버전
+- RandomForest - 순차 처리 랜덤 포레스트
+- ParallelRandomForest - 병렬 처리 랜덤 포레스트
 
 ## 4.2 Experimental Setup(실험 준비)
 
@@ -53,8 +53,7 @@
 
 # 6. Potential Limitations(잠재적인 한계)
 
-- ---이 한계
-- 계산 복잡도
+- 순차적 처리를 하게 되면 트리 계산이 설정한 만큼 늘어나기 때문에 계산 시간이 증가한다.
 
 # 7. Timeline(타임라인)
 

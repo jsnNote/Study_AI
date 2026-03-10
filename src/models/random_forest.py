@@ -73,14 +73,14 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
         return np.mean(self.predict(X) == y)
     
     @property
-    def oob_err(self):
+    def oob_accuracy(self):
         scores = np.array([self.score(x, y) for x, y in self.oob_data])
         
         return np.mean(scores)
         
 
 
-class ParalleRandomForest:
+class ParallelRandomForest:
     def __init__(self, n_estimators, max_features=None, max_depth=4, min_samples_leaf=1, random_state=42):
         self.n_estimators = n_estimators
         self.max_samples = None
@@ -142,6 +142,6 @@ class ParalleRandomForest:
         return np.mean(self.predict(X) == y)
     
     @property
-    def oob_err(self):
+    def oob_accuracy(self):
         scores = np.array([self.score(x, y) for x, y in self.oob_data])
         return np.mean(scores)

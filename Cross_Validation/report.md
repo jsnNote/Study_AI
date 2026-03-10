@@ -29,7 +29,7 @@
 
 # 3. Implementation(구현)
 
-# 3.1 의사 코드
+## 3.1 의사 코드
 
 ```python
 
@@ -46,10 +46,9 @@ mean(scores)
 
 # 4. Experimental Setup(실험 준비)
 
-# 4.1 Datset
+## 4.1 Datset
 
 - titanic dataset
--
 
 ## 4.2 Hyperparameter Settings
 
