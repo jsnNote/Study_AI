@@ -3,6 +3,10 @@ import pandas as pd
 from pandas import DataFrame
 import json
 from ..utils.tools import find_best_split, mode
+
+# 최적화
+# - 판다스를 쓰는 방식에서 넘파이로 변경
+# - 병렬처리
 class Node:
     def __init__(self, left=None, right=None, threshold=None, feature=None, is_leaf=False, value=None, depth=0):
         self.left = left
@@ -52,7 +56,6 @@ class DecsionTree:
             return  Node(is_leaf=True, value=mode(y), depth=depth) # leaf node로 만들면 됨.
         
         root = Node(**best_split, depth=depth)
-        remaining_features = [f for f in features if f != best_split["feature"]]
         # print(f"Node -feature: {root.feature}, depth: {root.depth}, (flag:{flag}) {len(remaining_features)}")
         # 분할하는 feature에 대한 인덱스를 구해야 함.
         left_idx = np.where(X[best_split["feature"]] <= best_split["threshold"])[0]
@@ -64,13 +67,13 @@ class DecsionTree:
             return  Node(is_leaf=True, value=mode(y), depth=depth)
          
         # 형제 노드는 같은 특성을 가지고 있을 수 있음. 왜냐하면 분할 이후에 threshold에 따라서 데이터가 분할되고 그 데이터만으로 분할이 또 일어남(독립적)
-        left_subset_X = X.iloc[left_idx][remaining_features]
+        left_subset_X = X.iloc[left_idx][features]
         left_subset_y = y.iloc[left_idx]
-        root.left = self._build_tree(left_subset_X, left_subset_y, remaining_features, depth=(depth+1), flag="left")
+        root.left = self._build_tree(left_subset_X, left_subset_y, features, depth=(depth+1), flag="left")
 
-        right_subset_X = X.iloc[right_idx][remaining_features]
+        right_subset_X = X.iloc[right_idx][features]
         right_subset_y = y.iloc[right_idx]
-        root.right = self._build_tree(right_subset_X, right_subset_y, remaining_features, depth=(depth + 1), flag="right")
+        root.right = self._build_tree(right_subset_X, right_subset_y, features, depth=(depth + 1), flag="right")
         
         return root
     
@@ -161,15 +164,18 @@ class RandomForestTree:
         
         rng = np.random.default_rng(seed=self.random_state)
 
-        left_feature_subset = rng.choice(self.features, size=self.max_features, replace=False)
+
+        feature_subset = rng.choice(self.features, size=self.max_features, replace=False)
+        # 원래는 노드마다 같은 feature_subset을 사용
+        # left_feature_subset = rng.choice(self.features, size=self.max_features, replace=False)
         left_subset_X = X.iloc[left_idx]
         left_subset_y = y.iloc[left_idx]
-        root.left = self._build_tree(left_subset_X, left_subset_y, left_feature_subset, depth=(depth+1), flag="left")
+        root.left = self._build_tree(left_subset_X, left_subset_y, feature_subset, depth=(depth+1), flag="left")
 
-        right_feature_subset = rng.choice(self.features, size=self.max_features, replace=False)
+        # right_feature_subset = rng.choice(self.features, size=self.max_features, replace=False)
         right_subset_X = X.iloc[right_idx]
         right_subset_y = y.iloc[right_idx]
-        root.right = self._build_tree(right_subset_X, right_subset_y, right_feature_subset, depth=(depth + 1), flag="right")
+        root.right = self._build_tree(right_subset_X, right_subset_y, feature_subset, depth=(depth + 1), flag="right")
         
         return root
     
