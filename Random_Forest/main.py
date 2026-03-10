@@ -60,27 +60,52 @@ X = categorical_data_preprocessing(train_final, embarked_encoding, feature="Emba
 X_final = data_preprocessing(X).drop(labels="Survived", axis=1)
 features = X_final.columns.values
 Y = X["Survived"]
-x_train, x_valdation, y_train, y_valdation = train_test_split(X_final, Y, test_size=0.2, random_state=42)
+x_train, x_validation, y_train, y_validation = train_test_split(X_final, Y, test_size=0.2, random_state=42)
 
 
 
+def time_test(n_estimators):
+    
+    rf = RandomForest(n_estimators, max_depth=4, min_samples_leaf=1)
+    start_time = time.time()
+    rf.fit(x_train, y_train, features)
+    end_time = time.time()
+    rf_time = end_time - start_time
+    
+    prf = ParalleRandomForest(100, max_depth=4, min_samples_leaf=1)
+    start_time = time.time()
+    prf.fit(x_train, y_train, features)
+    end_time = time.time()
+    prf_time = end_time - start_time
 
+    return (rf_time, prf_time)
 
 
 # Process를 만드는 거는 무거운 작업이기 때문에 작업이 적은 경우에는 오히려 순차적인 처리가 빠르다. -> 작업이 많으면 오히려 빠름
 if __name__ == '__main__':
-    rf = RandomForest(100, max_depth=10, min_samples_leaf=4)
-    # 순차 처리 랜덤포레스트
-    start_time = time.time()
-    rf.fit(x_train, y_train, features)
-    end_time = time.time()
-    print(end_time - start_time)
-    print(rf.score(x_valdation, y_valdation))
+    # # 순차 처리 랜덤포레스트
+    # rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
+    # rf.fit(x_train, y_train, features)
+    # print(rf.score(x_valdation, y_valdation))
     
-    # 병렬 처리 랜덤포레스트
-    prf = ParalleRandomForest(100, max_depth=10, min_samples_leaf=4)
-    start_time = time.time()
-    prf.fit(x_train, y_train, features)
-    end_time = time.time()
-    print(end_time - start_time)
-    print(prf.score(x_valdation, y_valdation))
+    # # 병렬 처리 랜덤포레스트
+    # prf = ParalleRandomForest(100, max_depth=4, min_samples_leaf=1)
+    # prf.fit(x_train, y_train, features)
+    # print(prf.score(x_valdation, y_valdation))
+    
+    # 순차 처리 vs 병렬 처리 시간 테스트 코드
+    for n in range(100, 501, 100):
+        rf_t, prf_t = time_test(n)
+        print(f"Number of trees [{n}] \n - Sequential Random Forest Traing Time: {rf_t:.4f} \n - Paralle Random Forest Traing Time: {prf_t:.4f}")
+
+
+    # # oob_err test code
+    # rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
+    # rf.fit(x_train, y_train, features)
+    # print(rf.oob_err)
+    
+    # prf = ParalleRandomForest(100, max_depth=4, min_samples_leaf=1)
+    # prf.fit(x_train, y_train, features)
+    # print(prf.oob_err)
+    
+    
