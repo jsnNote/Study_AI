@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from .decision_tree import RandomForestTree
-from ..utils.tools import mode
+from ..utils.tools import mode, accuracy_score
 
 from multiprocessing import Pool, current_process, Manager
 
@@ -22,7 +22,7 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
         self.trees = None
-        self.oob_data = []
+        self.oob_scores = []
         
     def _build_tree(self, X, y, features=None):
         if features is None:
@@ -39,9 +39,10 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
         
         for i, tree in enumerate(self.trees):
             # bootstrap
-            subset_x, subset_y = self.__bootstrap_sample(X, y, i)
+            subset_x, subset_y, oob_x, oob_y = self.__bootstrap_sample(X, y, i)
             
             tree.fit(subset_x, subset_y)
+            self.oob_scores.append(accuracy_score(tree.predict(oob_x), oob_y))
 
     def __bootstrap_sample(self, X, y, i):
         rng = np.random.default_rng(seed=self.random_state+i)
@@ -51,9 +52,8 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
         oob_idx = X.index.difference(idx)
         oob_x = X.loc[oob_idx]
         oob_y = y.loc[oob_idx]
-        self.oob_data.append((oob_x, oob_y))
         
-        return bootstrap_x, bootstrap_y
+        return bootstrap_x, bootstrap_y, oob_x, oob_y
 
     def fit(self, X, y, features=None):
         self.max_samples = np.ceil((X.shape[0] * 0.632)).astype(dtype=np.int64) #Out-of-Bag(OOB)를 근거로 설명하기
@@ -74,9 +74,7 @@ class RandomForest: # max_features은 보통 sqrt(max_features) 사용
     
     @property
     def oob_accuracy(self):
-        scores = np.array([self.score(x, y) for x, y in self.oob_data])
-        
-        return np.mean(scores)
+        return np.mean(self.oob_scores)
         
 
 
@@ -89,9 +87,9 @@ class ParallelRandomForest:
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
         self.trees = None
-        self.oob_data = Manager().list()
+        self.oob_scores = Manager().list()
 
-    def __bootstrap_sample(self, X, y, i, oob_data):
+    def __bootstrap_sample(self, X, y, i):
         rng = np.random.default_rng(seed=self.random_state+i)
         idx = rng.choice(X.index, size=self.max_samples, replace=True)
         bootstrap_x = X.loc[idx] 
@@ -99,14 +97,15 @@ class ParallelRandomForest:
         oob_idx = X.index.difference(idx)
         oob_x = X.loc[oob_idx]
         oob_y = y.loc[oob_idx]
-        oob_data.append((oob_x, oob_y))
         
-        return (bootstrap_x, bootstrap_y)
+        return (bootstrap_x, bootstrap_y, oob_x, oob_y)
     
     def _build_tree(self, tree_info): 
-        dt, X, y, i, oob_data = tree_info
-        subset_x, subset_y = self.__bootstrap_sample(X, y, i, oob_data)
+        dt, X, y, i, oob_scores = tree_info
+        subset_x, subset_y, oob_x, oob_y = self.__bootstrap_sample(X, y, i)
         dt.fit(subset_x, subset_y)
+        oob_scores.append(accuracy_score(dt.predict(oob_x), oob_y))
+        
         return dt
         
         
@@ -124,7 +123,7 @@ class ParallelRandomForest:
                 random_state=(self.random_state + i) 
                 ) for i in range(self.n_estimators)]
         
-        tasks = [(tree, X, y, i, self.oob_data) for i, tree in enumerate(trees)]
+        tasks = [(tree, X, y, i, self.oob_scores) for i, tree in enumerate(trees)]
 
         with Pool(processes=n_cpu) as p:
             self.trees = p.map(self._build_tree, tasks)
@@ -143,5 +142,4 @@ class ParallelRandomForest:
     
     @property
     def oob_accuracy(self):
-        scores = np.array([self.score(x, y) for x, y in self.oob_data])
-        return np.mean(scores)
+        return np.mean(self.oob_scores)

@@ -83,21 +83,24 @@ def time_test(n_estimators):
 
 # Process를 만드는 거는 무거운 작업이기 때문에 작업이 적은 경우에는 오히려 순차적인 처리가 빠르다. -> 작업이 많으면 오히려 빠름
 if __name__ == '__main__':
-    # # 순차 처리 랜덤포레스트
-    # rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
-    # rf.fit(x_train, y_train, features)
-    # print(rf.score(x_validation, y_validation))
+    # 순차 처리 랜덤포레스트
+    rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
+    rf.fit(x_train, y_train, features)
+    print(rf.score(x_validation, y_validation))
+    print(rf.oob_accuracy)
     
-    # # 병렬 처리 랜덤포레스트
-    # prf = ParallelRandomForest(100, max_depth=4, min_samples_leaf=1)
-    # prf.fit(x_train, y_train, features)
-    # print(prf.score(x_validation, y_validation))
+    # 병렬 처리 랜덤포레스트
+    prf = ParallelRandomForest(100, max_depth=4, min_samples_leaf=1)
+    prf.fit(x_train, y_train, features)
+    print(prf.score(x_validation, y_validation))
+    print(prf.oob_accuracy)
     
-    # 순차 처리 vs 병렬 처리 시간 테스트 코드
-    for n in range(100, 501, 100):
-        rf_t, prf_t, accuracy = time_test(n)
-        print(f"Number of trees [{n}] \n - Sequential Random Forest Traing Time: {rf_t:.4f} \n - Paralle Random Forest Traing Time: {prf_t:.4f}")
-        print(accuracy)
+    # # 순차 처리 vs 병렬 처리 시간 테스트 코드
+    # for n in range(100, 501, 100):
+    #     n=1000
+    #     rf_t, prf_t, accuracy = time_test(n)
+    #     print(f"Number of trees [{n}] \n - Sequential Random Forest training Time: {rf_t:.4f} \n - Paralle Random Forest training Time: {prf_t:.4f}")
+    #     print(accuracy)
         
     # # oob_accuracy test code
     # rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
@@ -132,5 +135,4 @@ if __name__ == '__main__':
     #     series = pd.Series([depth, round(dt_train_score, 4), round(dt_val_score, 4), round(dt_gap, 4), round(rf_train_score, 4), round(rf_val_score, 4), round(rf_gap, 4)]).to_frame().T
     #     series.columns = ["depth", "DT Train Accuracy", "DT Val Accuracy", "DT Gap", "RF Train Accuracy", "RF Val Accuracy", "RF Gap"]
     #     table = pd.concat([table, series], axis=0, ignore_index=True)
-        
     # table.to_csv('result.csv')
