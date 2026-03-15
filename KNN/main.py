@@ -21,12 +21,11 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from src import KNN, accuracy_score
 from src.core import minkowski, manhattan, euclidean
+from src.utils.metrics import BinaryClassifierPerformance
 
 path = "../datasets/titanic/"
-
 # 1. 데이터 전처리
 train = pd.read_csv(path + "train.csv")
-
 
 def DataPreprocessing(data: DataFrame):
     _data = data.copy()
@@ -36,18 +35,24 @@ def DataPreprocessing(data: DataFrame):
     _data["Age"] = _data["Age"].fillna(median_ages)
     _data["FamilySize"] = _data["SibSp"] + _data["Parch"] + 1
     # Ms 데이터가 하나 있는데 값이 없어서 제거
-    _data = _data.select_dtypes(exclude=["str"])
-    _data = _data.dropna(axis=0)
-    _data = _data.dropna(axis=1)
+    cols_to_drop = [
+        "PassengerId",
+        "Ticket",
+        "Name",
+        "Cabin",
+        "Sex",
+        "Title",
+        "Embarked",
+    ]
+    _data = _data.drop(cols_to_drop, axis=1)
     return _data
 
-
-X = train.transform(DataPreprocessing)
+X = DataPreprocessing(train)
 X = X.drop(labels="Survived", axis=1)
 Y_train = train["Survived"].values
 
 # 특성 선택
-used_SelectKBest = False
+used_SelectKBest = False    
 feat_sel = None
 
 if used_SelectKBest:
