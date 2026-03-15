@@ -49,15 +49,17 @@ class BinaryClassifierPerformance:
         
     def __calculate_confusion_matrix(self, prediction, actual):
         acutal_np = np.array(actual) # series를 타입변환
-        # 예측 값이 postive인 경우
-        P_idx = np.where(prediction == 1)[0]
+        # 예측 값이 postive(1)인 경우
+        p_mask = (prediction == 1)
         # 같을 때 1, 다른 때 0
-        self.FP, self.TP = (np.unique((prediction[P_idx] == acutal_np[P_idx]), return_counts=True)[1])
+        self.TP = np.sum((prediction[p_mask] == actual[p_mask]))
+        self.FP = np.sum(p_mask) - self.TP
         
-        # 예측 값이 negative인 경우
-        N_idx = np.where(prediction == 0)[0]
+        # 예측 값이 negative(0)인 경우
         # 같을 때 1, 다른 때 0
-        self.FN, self.TN = (np.unique((prediction[N_idx] == acutal_np[N_idx]), return_counts=True)[1])
+        n_mask = (prediction == 0)
+        self.TN = np.sum(prediction[n_mask] == actual[n_mask])
+        self.FN = np.sum(n_mask) - self.TN
 
     @property
     def accuracy(self):
