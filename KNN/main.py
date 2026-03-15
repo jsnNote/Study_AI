@@ -90,6 +90,12 @@ for i in range(1, 31):
 model = KNN(k=best_k, metric=euclidean)
 # 3. 모델 학습
 model.fit(x_train, y_train)
+knn_per = BinaryClassifierPerformance(model.predict(x_valid), y_valid)
+print("KNN")
+print(f"Accuracy: {knn_per.accuracy}")
+print(f"Precision: {knn_per.precision}")
+print(f"Recall: {knn_per.recall}")
+print(f"F1-score: {knn_per.F1_score}")
 
 # 4. 검증
 print(accuracy_score(y_valid, model.predict(x_valid)))
