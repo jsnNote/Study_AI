@@ -1,16 +1,19 @@
 import numpy as np
 import pandas as pd
+import pickle
 from pandas import DataFrame
 from .metrics import *
+
 
 def mode(data):
     if len(data) == 0:
         return None
-    
+
     values, counts = np.unique(data, return_counts=True)
     max_idx = np.argmax(counts)
 
     return values[max_idx]
+
 
 # find_best_split - 연속 속성에서 최고의 분할을 찾 -> 하나의 속성에 대해서도 동작하게 수정
 def find_best_split(X, y, features=None):
@@ -22,7 +25,7 @@ def find_best_split(X, y, features=None):
     split_info = {"feature": [], "threshold": []}
     X_np = np.array(X)
     y_np = np.array(y)
-    
+
     for feature_idx in range(X.shape[1]):
         column_values = X_np[:, feature_idx]
         idx_sorted = np.argsort(column_values)  # x가 DataFrame이면 안됨
@@ -34,7 +37,7 @@ def find_best_split(X, y, features=None):
         #     features[feature_idx] if features else X_columns[feature_idx]
         # )  # else DataFrame으로 들어올 때, if는 그 외의 경우
         feature = features[feature_idx]
-          # else DataFrame으로 들어올 때, if는 그 외의 경우
+        # else DataFrame으로 들어올 때, if는 그 외의 경우
         for t in thresholds:
             left_data = y_sorted[np.where(x_sorted <= t)]
             right_data = y_sorted[np.where(x_sorted > t)]
@@ -49,3 +52,18 @@ def find_best_split(X, y, features=None):
     return split_info
 
 
+def save_trained_model(model, path):
+    try:
+        with open(path, "wb") as f:
+            pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
+            print(f"저장 완료{{path}}")
+    except Exception as e:
+        print(f"저장 실패: {e}")
+
+
+def load_trained_model(path):
+    try:
+        with open(path, "rb") as f:
+            return pickle.load(f)
+    except Exception as e:
+        print(f"로드 실패: {e}")
