@@ -2,7 +2,7 @@ import sys
 import os
 
 # 현재 파일(main.py)의 부모(A)의 부모(my_ml_project) 경로를 가져옴
-root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # 파이썬 모듈 검색 경로 최상단에 추가
 if root_path not in sys.path:
@@ -19,22 +19,25 @@ from sklearn.model_selection import train_test_split
 
 from sklearn.neighbors import KNeighborsClassifier
 
-from src import KNN, accuracy_score
+from src import KNN, accuracy_score, save_trained_model, load_trained_model
 from src.core import minkowski, manhattan, euclidean
 from src.utils.metrics import BinaryClassifierPerformance
+import pickle
 
 path = "../datasets/titanic/"
 # 1. 데이터 전처리
 train = pd.read_csv(path + "train.csv")
 
-def DataPreprocessing(data: DataFrame):
-    _data = data.copy()
-    _data["Sex_numeric"] = _data["Sex"].map({"male": 0, "female": 1})
-    _data["Title"] = _data["Name"].str.extract(" ([A-Za-z]+)\.")
-    median_ages = _data.groupby("Title")["Age"].transform("median")
-    _data["Age"] = _data["Age"].fillna(median_ages)
-    _data["FamilySize"] = _data["SibSp"] + _data["Parch"] + 1
+
+def data_preprocessing(df: DataFrame):
+    new_df = df.copy()
+    new_df["Sex_numeric"] = new_df["Sex"].map({"male": 0, "female": 1})
+    new_df["Title"] = new_df["Name"].str.extract(" ([A-Za-z]+)\.")
+    median_ages = new_df.groupby("Title")["Age"].transform("median")
+    new_df["Age"] = new_df["Age"].fillna(median_ages)
+    new_df["FamilySize"] = new_df["SibSp"] + new_df["Parch"] + 1
     # Ms 데이터가 하나 있는데 값이 없어서 제거
+
     cols_to_drop = [
         "PassengerId",
         "Ticket",
@@ -44,15 +47,16 @@ def DataPreprocessing(data: DataFrame):
         "Title",
         "Embarked",
     ]
-    _data = _data.drop(cols_to_drop, axis=1)
-    return _data
+    new_df = new_df.drop(cols_to_drop, axis=1)
+    return new_df
 
-X = DataPreprocessing(train)
+
+X = data_preprocessing(train)
 X = X.drop(labels="Survived", axis=1)
 Y_train = train["Survived"].values
 
 # 특성 선택
-used_SelectKBest = False    
+used_SelectKBest = False
 feat_sel = None
 
 if used_SelectKBest:
@@ -69,7 +73,7 @@ minmax_sclaer = MinMaxScaler()  # 특성의 범위가 불균형해서 0~1 범위
 minmax_sclaer.fit(X_selected)
 X_scaled = minmax_sclaer.transform(X_selected)
 
-x_train, x_valid, y_train, y_valid = train_test_split(
+x_train, x_validation, y_train, y_validation = train_test_split(
     X_scaled, Y_train, test_size=0.2, random_state=42
 )
 
@@ -77,10 +81,10 @@ x_train, x_valid, y_train, y_valid = train_test_split(
 max_score = 0
 best_k = 0
 for i in range(1, 31):
-    model = KNN(k = i, metric=euclidean)
+    model = KNN(k=i, metric=euclidean)
     model.fit(x_train, y_train)
 
-    score = np.mean(y_valid == model.predict(x_valid))
+    score = np.mean(y_validation == model.predict(x_validation))
 
     if max_score < score:
         max_score = score
@@ -90,7 +94,9 @@ for i in range(1, 31):
 model = KNN(k=best_k, metric=euclidean)
 # 3. 모델 학습
 model.fit(x_train, y_train)
-knn_per = BinaryClassifierPerformance(model.predict(x_valid), y_valid)
+save_trained_model(model, "./knn.pickle")
+
+knn_per = BinaryClassifierPerformance(model.predict(x_validation), y_validation)
 print("KNN")
 print(f"Accuracy: {knn_per.accuracy}")
 print(f"Precision: {knn_per.precision}")
@@ -98,15 +104,18 @@ print(f"Recall: {knn_per.recall}")
 print(f"F1-score: {knn_per.F1_score}")
 
 # 4. 검증
-print(accuracy_score(y_valid, model.predict(x_valid)))
+print(accuracy_score(y_validation, model.predict(x_validation)))
 
+# 5. 예측값 저장
+data = {"prediction": model.predict(x_validation)}
 
+exit()
 # ⭐ KNeighborsClassifier 사용
 knn = KNeighborsClassifier(n_neighbors=best_k, metric="euclidean")
 knn.fit(x_train, y_train)
 
 # 4. 예측
-print(knn.predict(x_valid))
+
 
 # survived_idx = np.where(model.Y_train == 1)
 # survived_data = model.X_train[survived_idx]

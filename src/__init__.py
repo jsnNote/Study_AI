@@ -8,7 +8,7 @@ from .utils.preprocessing import (
     categorical_data_preprocessing,
     one_hot_encoding,
 )
-from .utils.tools import save_trained_model, load_trained_model
+from .utils.tools import save_trained_model, load_trained_model, mode
 
 __all__ = [
     "DecsionTree",
@@ -26,4 +26,5 @@ __all__ = [
     "one_hot_encoding",
     "save_trained_model",
     "load_trained_model",
+    "mode",
 ]

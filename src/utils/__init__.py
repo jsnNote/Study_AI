@@ -13,4 +13,5 @@ __all__ = [
     "categorical_data_preprocessing",
     "save_trained_model",
     "load_trained_model",
+    "mode",
 ]
