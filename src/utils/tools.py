@@ -56,7 +56,7 @@ def save_trained_model(model, path):
     try:
         with open(path, "wb") as f:
             pickle.dump(model, f, pickle.HIGHEST_PROTOCOL)
-            print(f"저장 완료{{path}}")
+            print(f"저장 완료({path})")
     except Exception as e:
         print(f"저장 실패: {e}")
 
@@ -64,6 +64,7 @@ def save_trained_model(model, path):
 def load_trained_model(path):
     try:
         with open(path, "rb") as f:
+            print(f"로드 완료({path})")
             return pickle.load(f)
     except Exception as e:
         print(f"로드 실패: {e}")
