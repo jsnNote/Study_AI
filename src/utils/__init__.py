@@ -11,4 +11,6 @@ __all__ = [
     "find_best_split",
     "ordinal_data_preprocessing",
     "categorical_data_preprocessing",
+    "save_trained_model",
+    "load_trained_model",
 ]
