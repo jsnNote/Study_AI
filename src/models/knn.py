@@ -3,6 +3,7 @@ import pandas as pd
 from pandas import DataFrame
 from ..core.distance import minkowski, manhattan, euclidean
 
+
 class KNN:
     def __init__(self, k: int = 3, metric=minkowski, p: int = 2):
         self.k = k
@@ -48,3 +49,23 @@ class KNN:
                     predict_value[idx] = k
 
         return predict_value
+
+    def predict_proba(self, data: np.ndarray):
+        if data.ndim == 1:
+            data = data.reshape((1, -1))
+
+        size = data.shape[0]
+        predict_proba_list = np.empty((size, 2))
+
+        for item, idx in zip(data, range(size)):
+            distance = self._get_distance(self.X_train, item)
+            distance_list = np.column_stack(
+                (distance, self.Y_train)
+            )  # distance는 정렬을 위한 기준
+            sorted_idx = np.argsort(distance_list[:, 0])
+            sorted_distance = distance_list[sorted_idx]
+            k_label = sorted_distance[: self.k, 1]
+            predict_proba_list[idx] = (
+                np.unique(k_label, return_counts=True)[1] / self.k
+            ).reshape(1, -1)
+        return predict_proba_list
