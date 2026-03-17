@@ -14,4 +14,6 @@ __all__ = [
     "save_trained_model",
     "load_trained_model",
     "mode",
+    "ROCCurveDrawer",
+    "BinaryClassifierPerformance",
 ]
