@@ -7,7 +7,13 @@ if root_path not in sys.path:
 
 
 from src.utils.metrics import BinaryClassifierPerformance
-from src import DecsionTree, KNN, ParallelRandomForest, BatchLogisticRegression
+from src import (
+    DecsionTree,
+    KNN,
+    ParallelRandomForest,
+    BatchLogisticRegression,
+    RandomForestTree,
+)
 from sklearn.model_selection import train_test_split
 import pandas as pd
 import numpy as np
@@ -66,20 +72,25 @@ if __name__ == "__main__":
     )
     features = list(x_train.columns.values)
 
-    # # Batch Logistic Regression
+    # Batch Logistic Regression
     blr = BatchLogisticRegression()
     blr.fit(np.array(x_train["Sex_numeric"]).reshape(x_train.shape[0], 1), y_train, 300)
-    blr_per = BinaryClassifierPerformance(
-        blr.predict(np.array(x_validation["Sex_numeric"])).reshape(
-            x_validation.shape[0]
-        ),
-        y_validation,
+    print(
+        blr.predict_proba(
+            np.array(x_validation["Sex_numeric"]).reshape(x_validation.shape[0], 1)
+        ).shape
     )
-    print("Batch Logistic Regression")
-    print(f"Accuracy: {blr_per.accuracy}")
-    print(f"Precision: {blr_per.precision}")
-    print(f"Recall: {blr_per.recall}")
-    print(f"F1-score: {blr_per.F1_score}")
+    # blr_per = BinaryClassifierPerformance(
+    #     blr.predict(np.array(x_validation["Sex_numeric"])).reshape(
+    #         x_validation.shape[0]
+    #     ),
+    #     y_validation,
+    # )
+    # print("Batch Logistic Regression")
+    # print(f"Accuracy: {blr_per.accuracy}")
+    # print(f"Precision: {blr_per.precision}")
+    # print(f"Recall: {blr_per.recall}")
+    # print(f"F1-score: {blr_per.F1_score}")
 
     # KNN
     knn = load_trained_model("../KNN/knn.pickle")
@@ -88,22 +99,29 @@ if __name__ == "__main__":
     x_val_scaled = minmax_sclaer.transform(
         x_validation[["Pclass", "Sex_numeric", "Age"]]
     )
-    knn_per = BinaryClassifierPerformance(knn.predict(x_val_scaled), y_validation)
-    print("KNN")
-    print(f"Accuracy: {knn_per.accuracy}")
-    print(f"Precision: {knn_per.precision}")
-    print(f"Recall: {knn_per.recall}")
-    print(f"F1-score: {knn_per.F1_score}")
+    print(knn.predict_proba(x_val_scaled).shape)
+    # knn_per = BinaryClassifierPerformance(knn.predict(x_val_scaled), y_validation)
+    # print("KNN")
+    # print(f"Accuracy: {knn_per.accuracy}")
+    # print(f"Precision: {knn_per.precision}")
+    # print(f"Recall: {knn_per.recall}")
+    # print(f"F1-score: {knn_per.F1_score}")
 
     # Decision Tree
-    dt = DecsionTree(max_depth=4, min_samples_leaf=1)
+    dt = DecsionTree(max_depth=10, min_samples_leaf=5)
     dt.fit(x_train, y_train, features)
-    dt_per = BinaryClassifierPerformance(dt.predict(x_validation), y_validation)
-    print("Decision Tree")
-    print(f"Accuracy: {dt_per.accuracy}")
-    print(f"Precision: {dt_per.precision}")
-    print(f"Recall: {dt_per.recall}")
-    print(f"F1-score: {dt_per.F1_score}")
+    print(dt.predict_proba(x_validation).shape)
+    # print(accuracy_score(dt.predict(x_validation), y_validation))
+    # dt_per = BinaryClassifierPerformance(dt.predict(x_validation), y_validation)
+    # print("Decision Tree")
+    # print(f"Accuracy: {dt_per.accuracy}")
+    # print(f"Precision: {dt_per.precision}")
+    # print(f"Recall: {dt_per.recall}")
+    # print(f"F1-score: {dt_per.F1_score}")
+
+    rt = RandomForestTree(3, 4, 5, features)
+    rt.fit(x_train, y_train)
+    print(rt.predict_proba(x_validation).shape)
 
     # Random Forest
     prf = ParallelRandomForest(
@@ -113,9 +131,10 @@ if __name__ == "__main__":
         max_features=np.ceil(np.sqrt(len(x_train.columns))).astype(dtype=np.int64),
     )
     prf.fit(x_train, y_train, features)
-    rf_per = BinaryClassifierPerformance(prf.predict(x_validation), y_validation)
-    print("Random Forest")
-    print(f"Accuracy: {rf_per.accuracy}")
-    print(f"Precision: {rf_per.precision}")
-    print(f"Recall: {rf_per.recall}")
-    print(f"F1-score: {rf_per.F1_score}")
+    print(prf.predict_proba(x_validation).shape)
+    # rf_per = BinaryClassifierPerformance(prf.predict(x_validation), y_validation)
+    # print("Random Forest")
+    # print(f"Accuracy: {rf_per.accuracy}")
+    # print(f"Precision: {rf_per.precision}")
+    # print(f"Recall: {rf_per.recall}")
+    # print(f"F1-score: {rf_per.F1_score}")
