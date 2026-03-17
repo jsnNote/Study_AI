@@ -84,6 +84,12 @@ class RandomForest:  # max_features은 보통 sqrt(max_features) 사용
         result = np.apply_along_axis(mode, axis=0, arr=categories)
         return result
 
+    def predict_proba(self, X):
+        all_tree_probs = [tree.predict_proba(X) for tree in self.trees]
+        probs_array = np.array(all_tree_probs)
+
+        return np.mean(probs_array, axis=0)
+
     def score(self, X, y):
         return np.mean(self.predict(X) == y)
 
@@ -158,6 +164,12 @@ class ParallelRandomForest:
         # axis=0(열 단위)로 categories에 대해서 mode()를 적용한다.
         result = np.apply_along_axis(mode, axis=0, arr=categories)
         return result
+
+    def predict_proba(self, X):
+        all_tree_probs = [tree.predict_proba(X) for tree in self.trees]
+        probs_array = np.array(all_tree_probs)
+
+        return np.mean(probs_array, axis=0)
 
     def score(self, X, y):
         return np.mean(self.predict(X) == y)
