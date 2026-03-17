@@ -113,9 +113,15 @@ class LogisticRegression:  # stochastic
                 self.b -= b_grad
 
     def predict(self, x):
-        z = [self.forpass(x_i) for x_i in x]
+        z = self.forpass(x)
         a = self.activation(z)
         return a > 0.5
+
+    def predict_proba(self, x):
+        z = self.forpass(x)
+        a = self.activation(z)  # 1일 확률
+        proba = np.column_stack((1 - a, a))
+        return proba
 
 
 class BatchLogisticRegression:  # Batch
@@ -149,6 +155,12 @@ class BatchLogisticRegression:  # Batch
             self.b -= self.lr * b_grad / x.shape[0]
 
     def predict(self, x):
-        z = [self.forpass(x_i) for x_i in x]
+        z = self.forpass(x)
         a = self.activation(z)
         return a > 0.5
+
+    def predict_proba(self, x):
+        z = self.forpass(x)
+        a = self.activation(z)  # 1일 확률
+        proba = np.column_stack((1 - a, a))
+        return proba
