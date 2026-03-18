@@ -119,43 +119,43 @@ if __name__ == "__main__":
     )
     knn_roc.plot_curve()
 
-    # # Decision Tree
-    # dt = DecsionTree(max_depth=4, min_samples_leaf=1)
-    # dt.fit(x_train, y_train, features)
+    # Decision Tree
+    dt = DecsionTree(max_depth=4, min_samples_leaf=1)
+    dt.fit(x_train, y_train, features)
 
-    # dt_per = BinaryClassifierPerformance(dt.predict(x_validation), y_validation)
-    # print("Decision Tree")
-    # print(f"Accuracy: {dt_per.accuracy}")
-    # print(f"Precision: {dt_per.precision}")
-    # print(f"Recall: {dt_per.recall}")
-    # print(f"F1-score: {dt_per.F1_score}")
+    dt_per = BinaryClassifierPerformance(dt.predict(x_validation), y_validation)
+    print("Decision Tree")
+    print(f"Accuracy: {dt_per.accuracy}")
+    print(f"Precision: {dt_per.precision}")
+    print(f"Recall: {dt_per.recall}")
+    print(f"F1-score: {dt_per.F1_score}")
 
-    # dt_roc = ROCCurveDrawer(
-    #     dt,
-    #     x_validation,
-    #     y_validation,
-    # )
-    # dt_roc.plot_curve()
+    dt_roc = ROCCurveDrawer(
+        dt,
+        x_validation,
+        y_validation,
+    )
+    dt_roc.plot_curve()
 
-    # # Random Forest
-    # prf = ParallelRandomForest(
-    #     n_estimators=600,
-    #     max_depth=7,
-    #     min_samples_leaf=7,
-    #     max_features=np.ceil(np.sqrt(len(x_train.columns))).astype(dtype=np.int64),
-    # )
-    # prf.fit(x_train, y_train, features)
+    # Random Forest
+    prf = ParallelRandomForest(
+        n_estimators=600,
+        max_depth=7,
+        min_samples_leaf=7,
+        max_features=np.ceil(np.sqrt(len(x_train.columns))).astype(dtype=np.int64),
+    )
+    prf.fit(x_train, y_train, features)
 
-    # prf_per = BinaryClassifierPerformance(prf.predict(x_validation), y_validation)
-    # print("Random Forest")
-    # print(f"Accuracy: {prf_per.accuracy}")
-    # print(f"Precision: {prf_per.precision}")
-    # print(f"Recall: {prf_per.recall}")
-    # print(f"F1-score: {prf_per.F1_score}")
+    prf_per = BinaryClassifierPerformance(prf.predict(x_validation), y_validation)
+    print("Random Forest")
+    print(f"Accuracy: {prf_per.accuracy}")
+    print(f"Precision: {prf_per.precision}")
+    print(f"Recall: {prf_per.recall}")
+    print(f"F1-score: {prf_per.F1_score}")
 
-    # prf_roc = ROCCurveDrawer(
-    #     prf,
-    #     x_validation,
-    #     y_validation,
-    # )
-    # prf_roc.plot_curve()
+    prf_roc = ROCCurveDrawer(
+        prf,
+        x_validation,
+        y_validation,
+    )
+    prf_roc.plot_curve()
