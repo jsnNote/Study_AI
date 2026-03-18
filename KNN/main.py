@@ -80,7 +80,7 @@ x_train, x_validation, y_train, y_validation = train_test_split(
 # k 하이퍼 파라미터 선택(튜닝)
 max_score = 0
 best_k = 0
-for i in range(1, 31):
+for i in range(1, 31, 2):
     model = KNN(k=i, metric=euclidean)
     model.fit(x_train, y_train)
 

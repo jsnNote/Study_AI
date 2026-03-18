@@ -115,7 +115,7 @@ class LogisticRegression:  # stochastic
     def predict(self, x):
         z = self.forpass(x)
         a = self.activation(z)
-        return a > 0.5
+        return a >= 0.5
 
     def predict_proba(self, x):
         z = self.forpass(x)
@@ -157,7 +157,7 @@ class BatchLogisticRegression:  # Batch
     def predict(self, x):
         z = self.forpass(x)
         a = self.activation(z)
-        return a > 0.5
+        return a >= 0.5
 
     def predict_proba(self, x):
         z = self.forpass(x)

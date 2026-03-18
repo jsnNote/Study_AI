@@ -18,6 +18,7 @@ class Node:
         is_leaf=False,
         value=None,
         depth=0,
+        prob=None,
     ):
         self.left = left
         self.right = right
@@ -26,7 +27,7 @@ class Node:
         self.is_leaf = is_leaf
         self.value = value
         self.depth = depth
-        self.prob = None
+        self.prob = prob
 
 
 class DecsionTree:
@@ -38,7 +39,7 @@ class DecsionTree:
     # _build_tree - 속성 중에서 분할 할 속성을 찾고 분할 후 서브 트리를 통해서 재귀적으로 트리 구축
     # 모든 특성(Feature)을 다 쓰는 것"이 아니라, 데이터를 가장 잘 나누는 "최적의 특성"을 매 순간 골라내는 것
     def _build_tree(
-        self, X, y, features, depth=0, flag="root"
+        self, X, y, features, depth=0, prob=None, flag="root"
     ):  # 수치형 feature로 처리
         best_split = find_best_split(X, y, features)
 
@@ -49,61 +50,70 @@ class DecsionTree:
         if y.empty:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
             return Node(
-                is_leaf=True, value=mode(y), depth=depth
+                is_leaf=True, value=mode(y), depth=depth, prob=prob
             )  # leaf node로 만들면 됨.
 
         # 2. 데이터 개수가 적은 경우에는 반환
         elif X.shape[0] < self.min_samples_leaf:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
             return Node(
-                is_leaf=True, value=mode(y), depth=depth
+                is_leaf=True, value=mode(y), depth=depth, prob=prob
             )  # leaf node로 만들면 됨.
 
         # 3. 대상 속성이 단일값을 가진 경우 -> label이 단일값인지 보면 됨.
         elif len(np.unique(y)) == 1:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
             return Node(
-                is_leaf=True, value=mode(y), depth=depth
+                is_leaf=True, value=mode(y), depth=depth, prob=prob
             )  # leaf node로 만들면 됨.
 
         # 4. 깊이 제한
         elif self.max_depth is not None and depth >= self.max_depth:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         # 5. feature가 없는 경우
         elif len(features) == 0 or best_split["feature"] == None:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
             return Node(
-                is_leaf=True, value=mode(y), depth=depth
+                is_leaf=True, value=mode(y), depth=depth, prob=prob
             )  # leaf node로 만들면 됨.
 
         root = Node(**best_split, depth=depth)
-        # print(f"Node -feature: {root.feature}, depth: {root.depth}, (flag:{flag}) {len(remaining_features)}")
+
         # 분할하는 feature에 대한 인덱스를 구해야 함.
-        left_idx = np.where(X[best_split["feature"]] <= best_split["threshold"])[0]
-        right_idx = np.where(X[best_split["feature"]] > best_split["threshold"])[0]
-        root.prob = (
-            np.unique((X[root.feature] > root.threshold), return_counts=True)[1]
-            / X.shape[0]
-        )
+        left_idx = np.where(X[best_split["feature"]] < best_split["threshold"])[0]
+        right_idx = np.where(X[best_split["feature"]] >= best_split["threshold"])[0]
+        prob_0 = np.mean(np.array(y)[left_idx])
+        prob_1 = np.mean(np.array(y)[right_idx])
+        root.prob = np.array((prob_0, prob_1))
 
         #  6 threhold에 한 쪽만 값이 있는 경우 -> 깊이가 더 깊어지는 문제가 발생
         if len(left_idx) == 0 or len(right_idx) == 0:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         # 형제 노드는 같은 특성을 가지고 있을 수 있음. 왜냐하면 분할 이후에 threshold에 따라서 데이터가 분할되고 그 데이터만으로 분할이 또 일어남(독립적)
-        left_subset_X = X.iloc[left_idx][features]
+        left_subset_X = X.iloc[left_idx]
         left_subset_y = y.iloc[left_idx]
         root.left = self._build_tree(
-            left_subset_X, left_subset_y, features, depth=(depth + 1), flag="left"
+            left_subset_X,
+            left_subset_y,
+            features,
+            depth=(depth + 1),
+            prob=root.prob,
+            flag="left",
         )
 
-        right_subset_X = X.iloc[right_idx][features]
+        right_subset_X = X.iloc[right_idx]
         right_subset_y = y.iloc[right_idx]
         root.right = self._build_tree(
-            right_subset_X, right_subset_y, features, depth=(depth + 1), flag="right"
+            right_subset_X,
+            right_subset_y,
+            features,
+            depth=(depth + 1),
+            prob=root.prob,
+            flag="right",
         )
 
         return root
@@ -117,6 +127,7 @@ class DecsionTree:
 
         return {
             f"{node.feature} <= {float(node.threshold):.2f}": {
+                "prob": node.prob[1],
                 "left": self.structed_tree(node.left),
                 "right": self.structed_tree(node.right),
                 "depth": node.depth,
@@ -131,31 +142,22 @@ class DecsionTree:
 
     def _traverse_tree(self, X, node):
         if node.is_leaf:
-            return node.value
+            return (node.value, node.prob)
 
-        if X[node.feature] <= node.threshold:
+        if X[node.feature] < node.threshold:
             return self._traverse_tree(X, node.left)
         else:
             return self._traverse_tree(X, node.right)
 
-    def _traverse_tree_proba(self, X, node):
-        if node.left.is_leaf or node.right.is_leaf:
-            return node.prob
-
-        if X[node.feature] <= node.threshold:
-            return self._traverse_tree_proba(X, node.left)
-        else:
-            return self._traverse_tree_proba(X, node.right)
-
     def predict(self, X):
-        return X.apply(lambda row: self._traverse_tree(row, self.root), axis=1).values
+        return X.apply(
+            lambda row: self._traverse_tree(row, self.root)[0], axis=1
+        ).values
 
     def predict_proba(self, X):
         result = np.empty((X.shape[0], 2))
         for idx in range(X.shape[0]):
-            result[idx] = self._traverse_tree_proba(X.iloc[idx], self.root).reshape(
-                1, -1
-            )
+            result[idx] = self._traverse_tree(X.iloc[idx], self.root)[1].reshape(1, -1)
         return result
 
 
@@ -177,45 +179,45 @@ class RandomForestTree:
         self.features = features
         self.random_state = random_state
 
-    def _build_tree(self, X, y, features, depth=0, flag="root"):
+    def _build_tree(self, X, y, features, depth=0, prob=None, flag="root"):
         best_split = find_best_split(X[features], y, features)
 
         # 1. 데이터가 없을 때 -> y가 없냐
         if y.empty:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         # 2. 데이터 개수가 적은 경우에는 반환
         elif X.shape[0] < self.min_samples_leaf:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         # 3. 대상 속성이 단일값을 가진 경우 -> label이 단일값인지 보면 됨.
         elif len(np.unique(y)) == 1:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         # 4. 깊이 제한
         elif self.max_depth is not None and depth >= self.max_depth:
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         # 5. feature가 없는 경우
         elif len(features) == 0 or best_split["feature"] == None:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
+
+        left_idx = np.where(X[best_split["feature"]] < best_split["threshold"])[0]
+        right_idx = np.where(X[best_split["feature"]] >= best_split["threshold"])[0]
 
         root = Node(**best_split, depth=depth)
-        root.prob = (
-            np.unique((X[root.feature] > root.threshold), return_counts=True)[1]
-            / X.shape[0]
-        )
-        left_idx = np.where(X[best_split["feature"]] <= best_split["threshold"])[0]
-        right_idx = np.where(X[best_split["feature"]] > best_split["threshold"])[0]
+        prob_0 = np.mean(np.array(y)[left_idx])
+        prob_1 = np.mean(np.array(y)[right_idx])
+        root.prob = np.array((prob_0, prob_1))
 
         #  6 threhold에 한 쪽만 값이 있는 경우 -> 깊이가 더 깊어지는 문제가 발생
         if len(left_idx) == 0 or len(right_idx) == 0:
             # print(f"leaf - depth: {depth}, (flag:{flag}) value: {mode(y)}")
-            return Node(is_leaf=True, value=mode(y), depth=depth)
+            return Node(is_leaf=True, value=mode(y), depth=depth, prob=prob)
 
         rng = np.random.default_rng(seed=self.random_state)
 
@@ -227,7 +229,12 @@ class RandomForestTree:
         left_subset_X = X.iloc[left_idx]
         left_subset_y = y.iloc[left_idx]
         root.left = self._build_tree(
-            left_subset_X, left_subset_y, feature_subset, depth=(depth + 1), flag="left"
+            left_subset_X,
+            left_subset_y,
+            feature_subset,
+            depth=(depth + 1),
+            prob=root.prob,
+            flag="left",
         )
 
         # right_feature_subset = rng.choice(self.features, size=self.max_features, replace=False)
@@ -238,6 +245,7 @@ class RandomForestTree:
             right_subset_y,
             feature_subset,
             depth=(depth + 1),
+            prob=root.prob,
             flag="right",
         )
 
@@ -270,29 +278,21 @@ class RandomForestTree:
 
     def _traverse_tree(self, X, node):
         if node.is_leaf:
-            return node.value
+            return (node.value, node.prob)
 
-        if X[node.feature] <= node.threshold:
+        if X[node.feature] < node.threshold:
             return self._traverse_tree(X, node.left)
         else:
             return self._traverse_tree(X, node.right)
 
-    def _traverse_tree_proba(self, X, node):
-        if node.left.is_leaf or node.right.is_leaf:
-            return node.prob
-
-        if X[node.feature] <= node.threshold:
-            return self._traverse_tree_proba(X, node.left)
-        else:
-            return self._traverse_tree_proba(X, node.right)
-
     def predict(self, X):
-        return X.apply(lambda row: self._traverse_tree(row, self.root), axis=1).values
+        return X.apply(
+            lambda row: self._traverse_tree(row, self.root)[0], axis=1
+        ).values
 
     def predict_proba(self, X):
         result = np.empty((X.shape[0], 2))
         for idx in range(X.shape[0]):
-            result[idx] = self._traverse_tree_proba(X.iloc[idx], self.root).reshape(
-                1, -1
-            )
+            result[idx] = self._traverse_tree(X.iloc[idx], self.root)[1].reshape(1, -1)
+
         return result

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from pandas import DataFrame
 import matplotlib.pyplot as plt
 
 
@@ -11,12 +10,18 @@ def accuracy_score(predict, solution):
 # [[확률변수], [확률변수 개수], [확률]]
 def _calculate_probability(data):
     RV, RV_count = np.unique(data, return_counts=True)
-    data_count = np.sum(RV_count)
+    n = np.sum(RV_count)
 
-    result = {"random_variable": [], "random_variable_count": [], "probabiliry": []}
+    # 0 또는 1만 가진 경우에 대한 처리
+    if not 0 in RV:
+        RV = np.insert(RV, 0, 0)
+    elif not 1 in RV:
+        RV = np.append(RV, 1)
+
+    result = {}
     result["random_variable"] = RV
     result["random_variable_count"] = RV_count
-    result["probability"] = RV_count / data_count
+    result["probability"] = RV_count / n
 
     return result
 
@@ -98,13 +103,15 @@ class ROCCurveDrawer:
         # 2. 모든 확률값을 임계값 후보로 설정 & 계산
         all_thresholds = sorted_proba
         all_thresholds = np.insert(all_thresholds, 0, all_thresholds[0] + 1)
-        all_thresholds = np.insert(all_thresholds, -1, 0)
+        all_thresholds = np.append(all_thresholds, 0)
 
         all_fpr = np.empty(len(all_thresholds))
         all_tpr = np.empty(len(all_thresholds))
 
         for idx, threshold in enumerate(all_thresholds):
-            per = BinaryClassifierPerformance((sorted_proba > threshold), sorted_y_true)
+            per = BinaryClassifierPerformance(
+                (sorted_proba >= threshold), sorted_y_true
+            )
             all_fpr[idx] = per.one_specificity
             all_tpr[idx] = per.recall
 
@@ -128,9 +135,10 @@ class ROCCurveDrawer:
 
     def plot_curve(self):
         fpr, tpr, thresholds = self.calculate_roc()
+        AUC = calculate_acu(fpr, tpr)
         plt.figure(figsize=(8, 6))
 
-        plt.plot(fpr, tpr, label=f"ROC Curve")
+        plt.plot(fpr, tpr, label=f"ROC Curve (AUC: {AUC:.4f})")
         plt.plot([0, 1], [0, 1], "k--", label="Random Guess")  # 대각선 기준선
         plt.xlabel("False Positive Rate (1 - Specificity)")
         plt.ylabel("True Positive Rate (Sensitivity)")
@@ -138,3 +146,12 @@ class ROCCurveDrawer:
         plt.legend()
         plt.grid(True)
         plt.show()
+
+
+def calculate_acu(fpr, tpr):
+    """_summary_\n
+    면적을 사다리꼴로 계산\n
+    추후 적분을 이용해서 계산하는 방향으로 구현
+    """
+
+    return np.sum((np.subtract(fpr[1:], fpr[:-1]) * np.add(tpr[1:], tpr[:-1])) / 2)

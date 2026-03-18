@@ -39,13 +39,14 @@ def find_best_split(X, y, features=None):
         feature = features[feature_idx]
         # else DataFrame으로 들어올 때, if는 그 외의 경우
         for t in thresholds:
-            left_data = y_sorted[np.where(x_sorted <= t)]
-            right_data = y_sorted[np.where(x_sorted > t)]
+            left_data = y_sorted[np.where(x_sorted < t)]
+            right_data = y_sorted[np.where(x_sorted >= t)]
             split_gini = calculate_split_gini(left_data, right_data)
             if best_split_gini > split_gini:
                 best_split_gini = split_gini
                 best_threshold = t
                 best_feature = feature
+
     split_info["feature"] = best_feature
     split_info["threshold"] = best_threshold
 
