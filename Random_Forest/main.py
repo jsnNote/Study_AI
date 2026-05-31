@@ -60,12 +60,12 @@ X = categorical_data_preprocessing(train_final, embarked_encoding, feature="Emba
 X_final = data_preprocessing(X).drop(labels="Survived", axis=1)
 features = X_final.columns.values
 Y = X["Survived"]
-x_train, x_validation, y_train, y_validation = train_test_split(X_final, Y, test_size=0.2, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(X_final, Y, test_size=0.2, random_state=42)
+x_train, x_validation, y_train, y_validation = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
 
 
 def time_test(n_estimators):
-    
     rf = RandomForest(n_estimators, max_depth=4, min_samples_leaf=1)
     start_time = time.time()
     rf.fit(x_train, y_train, features)
@@ -86,13 +86,13 @@ if __name__ == '__main__':
     # 순차 처리 랜덤포레스트
     rf = RandomForest(100, max_depth=4, min_samples_leaf=1)
     rf.fit(x_train, y_train, features)
-    print(rf.score(x_validation, y_validation))
+    print(rf.score(x_test, y_test))
     print(rf.oob_accuracy)
     
     # 병렬 처리 랜덤포레스트
     prf = ParallelRandomForest(100, max_depth=4, min_samples_leaf=1)
     prf.fit(x_train, y_train, features)
-    print(prf.score(x_validation, y_validation))
+    print(prf.score(x_test, y_test))
     print(prf.oob_accuracy)
     
     # # 순차 처리 vs 병렬 처리 시간 테스트 코드

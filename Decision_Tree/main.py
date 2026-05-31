@@ -64,7 +64,8 @@ embarked_encoding = one_hot_encoding(train_final["Embarked"], "Embarked")
 X = categorical_data_preprocessing(train_final, embarked_encoding, feature="Embarked")
 X_final = data_preprocessing(X).drop(labels="Survived", axis=1)
 Y = X["Survived"]
-x_train, x_valdation, y_train, y_valdation = train_test_split(X_final, Y, test_size=0.2, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(X_final, Y, test_size=0.2, random_state=42)
+x_train, x_valdation, y_train, y_valdation = train_test_split(x_train, y_train, test_size=0.2, random_state=42)
 
 
 # 2. 하이퍼 파라미터 튜닝
@@ -95,7 +96,7 @@ if enable_tuning:
     model.fit(x_train, y_train, features)
 
     # 4. 모델 정확도
-    print(accuracy_score(model.predict(x_valdation), y_valdation))
+    print(accuracy_score(model.predict(x_test), y_test))
 
 else:
     model = DecsionTree(max_depth=None)
@@ -103,11 +104,9 @@ else:
     model.fit(x_train, y_train, features)
 
     train_score = np.mean(model.predict(x_train) == y_train)
-    score = np.mean(model.predict(x_valdation) == y_valdation)
-    print(f"score - train score: {train_score} \n \t - validation score: {score}")
+    score = np.mean(model.predict(x_test) == y_test)
+    print(f"score - train score: {train_score} \n \t - test score: {score}")
     model.visualize_tree(model.root)
-
-    # print(np.mean(model.predict(x_valdation) == y_valdation))
 
 
 # ⭐ 모델 시각화

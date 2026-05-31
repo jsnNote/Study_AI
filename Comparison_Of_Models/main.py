@@ -69,8 +69,11 @@ if __name__ == "__main__":
     )
     X_final = data_preprocessing(X).drop(labels="Survived", axis=1)
     Y = X["Survived"]
-    x_train, x_validation, y_train, y_validation = train_test_split(
+    x_train, x_test, y_train, y_test = train_test_split(
         X_final, Y, test_size=0.2, random_state=42
+    )
+    x_train, x_validation, y_train, y_validation = train_test_split(
+        x_train, y_train, test_size=0.2, random_state=42
     )
     features = list(x_train.columns.values)
 
@@ -80,9 +83,9 @@ if __name__ == "__main__":
 
     blr_per = BinaryClassifierPerformance(
         blr.predict(
-            np.array(x_validation["Sex_numeric"]).reshape(x_validation.shape[0], 1)
+            np.array(x_test["Sex_numeric"]).reshape(x_test.shape[0], 1)
         ),
-        y_validation,
+        y_test,
     )
     print("Batch Logistic Regression")
     print(f"Accuracy: {blr_per.accuracy}")
@@ -92,20 +95,20 @@ if __name__ == "__main__":
 
     blr_roc = ROCCurveDrawer(
         blr,
-        np.array(x_validation["Sex_numeric"]).reshape(x_validation.shape[0], 1),
-        y_validation,
+        np.array(x_test["Sex_numeric"]).reshape(x_test.shape[0], 1),
+        y_test,
     )
     blr_roc.plot_curve()
 
     # KNN
     knn = load_trained_model("../KNN/knn.pickle")
     minmax_sclaer = MinMaxScaler()
-    minmax_sclaer.fit(x_validation[["Pclass", "Sex_numeric", "Age"]])
-    x_val_scaled = minmax_sclaer.transform(
-        x_validation[["Pclass", "Sex_numeric", "Age"]]
+    minmax_sclaer.fit(x_test[["Pclass", "Sex_numeric", "Age"]])
+    x_test_scaled = minmax_sclaer.transform(
+        x_test[["Pclass", "Sex_numeric", "Age"]]
     )
 
-    knn_per = BinaryClassifierPerformance(knn.predict(x_val_scaled), y_validation)
+    knn_per = BinaryClassifierPerformance(knn.predict(x_test_scaled), y_test)
     print("KNN")
     print(f"Accuracy: {knn_per.accuracy}")
     print(f"Precision: {knn_per.precision}")
@@ -114,8 +117,8 @@ if __name__ == "__main__":
 
     knn_roc = ROCCurveDrawer(
         knn,
-        x_val_scaled,
-        y_validation,
+        x_test_scaled,
+        y_test,
     )
     knn_roc.plot_curve()
 
@@ -123,7 +126,7 @@ if __name__ == "__main__":
     dt = DecsionTree(max_depth=4, min_samples_leaf=1)
     dt.fit(x_train, y_train, features)
 
-    dt_per = BinaryClassifierPerformance(dt.predict(x_validation), y_validation)
+    dt_per = BinaryClassifierPerformance(dt.predict(x_test), y_test)
     print("Decision Tree")
     print(f"Accuracy: {dt_per.accuracy}")
     print(f"Precision: {dt_per.precision}")
@@ -132,8 +135,8 @@ if __name__ == "__main__":
 
     dt_roc = ROCCurveDrawer(
         dt,
-        x_validation,
-        y_validation,
+        x_test,
+        y_test,
     )
     dt_roc.plot_curve()
 
@@ -146,7 +149,7 @@ if __name__ == "__main__":
     )
     prf.fit(x_train, y_train, features)
 
-    prf_per = BinaryClassifierPerformance(prf.predict(x_validation), y_validation)
+    prf_per = BinaryClassifierPerformance(prf.predict(x_test), y_test)
     print("Random Forest")
     print(f"Accuracy: {prf_per.accuracy}")
     print(f"Precision: {prf_per.precision}")
@@ -155,7 +158,7 @@ if __name__ == "__main__":
 
     prf_roc = ROCCurveDrawer(
         prf,
-        x_validation,
-        y_validation,
+        x_test,
+        y_test,
     )
     prf_roc.plot_curve()

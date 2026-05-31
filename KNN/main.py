@@ -73,10 +73,12 @@ minmax_sclaer = MinMaxScaler()  # 특성의 범위가 불균형해서 0~1 범위
 minmax_sclaer.fit(X_selected)
 X_scaled = minmax_sclaer.transform(X_selected)
 
-x_train, x_validation, y_train, y_validation = train_test_split(
+x_train, x_test, y_train, y_test = train_test_split(
     X_scaled, Y_train, test_size=0.2, random_state=42
 )
-
+x_train, x_validation, y_train, y_validation = train_test_split(
+    x_train, y_train, test_size=0.2, random_state=42
+)
 # k 하이퍼 파라미터 선택(튜닝)
 max_score = 0
 best_k = 0
@@ -96,18 +98,16 @@ model = KNN(k=best_k, metric=euclidean)
 model.fit(x_train, y_train)
 save_trained_model(model, "./knn.pickle")
 
-knn_per = BinaryClassifierPerformance(model.predict(x_validation), y_validation)
+# 4. 검증
+knn_per = BinaryClassifierPerformance(model.predict(x_test), y_test)
 print("KNN")
 print(f"Accuracy: {knn_per.accuracy}")
 print(f"Precision: {knn_per.precision}")
 print(f"Recall: {knn_per.recall}")
 print(f"F1-score: {knn_per.F1_score}")
 
-# 4. 검증
-print(accuracy_score(y_validation, model.predict(x_validation)))
-
 # 5. 예측값 저장
-data = {"prediction": model.predict(x_validation)}
+data = {"prediction": model.predict(x_test)}
 
 exit()
 # ⭐ KNeighborsClassifier 사용
